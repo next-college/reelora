@@ -1,36 +1,60 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Welcome, Reelora Contributor
 
-## Getting Started
+[Setting Up the Development Environment](#setting-up-the-development-environment)
 
-First, run the development server:
+[Pull Requests](#pull-requests)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Setting Up the Development Environment
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+1. Fork the repository.
+2. In your terminal, run the `git clone` command with the forked repository's URL, e.g.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+    ``` bash
+    git clone https://github.com/JohnDoe/reelora.git
+    ```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+    This creates a local repository on your machine.
 
-## Learn More
+3. To keep your fork up to date with the development branch of the company's repository, run the following command.
 
-To learn more about Next.js, take a look at the following resources:
+    ```bash
+    git config remote.upstream.fetch "+refs/heads/development:refs/remotes/upstream/development" 
+    ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+    Now, when you run `git fetch upstream`, Git will only fetch `upstream/development`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+4. If you decide to pull in the updates, then use the following command.
 
-## Deploy on Vercel
+    ``` bash
+    git pull upstream development
+    ```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+5. Run `git remote -v` to verify. You should see this.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+    ``` bash
+    origin    https://github.com/JohnDoe/reelora.git (fetch)
+    origin    https://github.com/JohnDoe/reelora.git (push)
+    upstream  https://github.com/next-college/reelora.git (fetch)
+    upstream  https://github.com/next-college/reelora.git (push)
+    ```
+
+    *N/B*: If the origin does not show the forked repository's URL, use the command below to add it and then run `git remote -v` again to verify.
+
+    ``` bash
+    git remote add origin https://github.com/JohnDoe/EleQ.git
+    ```
+
+6. Run `npm install` from the root of your project to install already set up dependencies. Cheers! You're all set. Well done. 🎉
+
+## Pull Requests
+
+For a consistent PR pattern that is easy to understand, use the following convention for PR titles: `<type>: <brief description>`. Common types include:
+
+- **feat** — new feature
+- **fix** — bug fix
+- **docs** — documentation changes
+- **refactor** — code restructuring without changing behaviour
+- **test** — adding or updating tests
+- **chore** — maintenance tasks (dependencies, configs)
+- **perf** — performance improvements
+- **style** — formatting, missing semicolons, etc.
