@@ -11,6 +11,7 @@ generator client {
 
 datasource db {
   provider = "mongodb"
+  url      = env("DATABASE_URL")
 }
 
 enum LikeType {
@@ -22,8 +23,10 @@ model User {
   id            String         @id @default(auto()) @map("_id") @db.ObjectId
   name          String?
   email         String         @unique
+  emailVerified DateTime?
   password      String?
   image         String?
+  accounts      Account[]
   videos        Video[]
   comments      Comment[]
   likes         Like[]
@@ -31,6 +34,25 @@ model User {
   subscribers   Subscription[] @relation("channel")
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
+}
+
+model Account {
+  id                String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String  @db.ObjectId
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
 }
 
 model Video {
@@ -72,6 +94,9 @@ model Like {
   videoId   String?  @db.ObjectId
   comment   Comment? @relation(fields: [commentId], references: [id])
   commentId String?  @db.ObjectId
+
+  @@unique([userId, videoId])
+  @@unique([userId, commentId])
 }
 
 model Subscription {
@@ -80,4 +105,6 @@ model Subscription {
   subscriberId String @db.ObjectId
   channel      User   @relation("channel", fields: [channelId], references: [id])
   channelId    String @db.ObjectId
+
+  @@unique([subscriberId, channelId])
 }
