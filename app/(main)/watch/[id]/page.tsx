@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getVideo, getRelatedVideos } from "@/lib/data/video";
+import DirectionalTransition from "@/components/transitions/DirectionalTransition";
 import WatchView from "@/components/video/WatchView";
 
 interface PageProps {
@@ -36,5 +37,9 @@ export default async function WatchPage({ params }: PageProps) {
 
   if (!video) notFound();
 
-  return <WatchView video={video} related={related} />;
+  return (
+    <DirectionalTransition>
+      <WatchView video={video} related={related} />
+    </DirectionalTransition>
+  );
 }
