@@ -1,54 +1,70 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { FireIcon, ClockIcon, SparkleIcon } from "@phosphor-icons/react";
+import { useRef, useCallback, useEffect, useState } from "react";
+import { FireIcon, ClockIcon } from "@phosphor-icons/react";
+import { useVideos } from "@/hooks/useVideos";
 import VideoGrid from "./VideoGrid";
 
-interface VideoOwner {
-  id: string;
-  name: string | null;
-  image: string | null;
-}
-
-interface Video {
-  id: string;
-  title: string;
-  thumbnail: string | null;
-  duration: number | null;
-  views: number;
-  createdAt: string;
-  owner: VideoOwner;
-}
-
-type FeedFilter = "foryou" | "trending" | "recent";
+type FeedFilter = "trending" | "new";
 
 const filters: { key: FeedFilter; label: string; icon: React.ComponentType<{ size?: number; weight?: "bold" | "fill" | "regular" }> }[] = [
-  { key: "foryou", label: "For you", icon: SparkleIcon },
   { key: "trending", label: "Trending", icon: FireIcon },
-  { key: "recent", label: "Recent", icon: ClockIcon },
+  { key: "new", label: "New", icon: ClockIcon },
 ];
 
-export default function HomeFeed() {
-  const [videos, setVideos] = useState<Video[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [activeFilter, setActiveFilter] = useState<FeedFilter>("foryou");
+function VideoGridSkeleton() {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8">
+      {Array.from({ length: 12 }).map((_, i) => (
+        <div key={i} className="space-y-3">
+          <div className="aspect-video skeleton rounded-lg" />
+          <div className="flex gap-3">
+            <div className="w-8 h-8 rounded-full skeleton shrink-0" />
+            <div className="flex-1 space-y-2">
+              <div className="h-4 skeleton w-full" />
+              <div className="h-3 skeleton w-2/3" />
+              <div className="h-3 skeleton w-1/3" />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
-  const fetchVideos = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/videos?sort=${activeFilter}`);
-      if (res.ok) {
-        const data = await res.json();
-        setVideos(data.videos || []);
+export default function HomeFeed() {
+  const [activeFilter, setActiveFilter] = useState<FeedFilter>("trending");
+  const {
+    data,
+    isLoading,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useVideos(activeFilter);
+
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  const handleIntersect = useCallback(
+    (entries: IntersectionObserverEntry[]) => {
+      if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+        fetchNextPage();
       }
-    } finally {
-      setLoading(false);
-    }
-  }, [activeFilter]);
+    },
+    [hasNextPage, isFetchingNextPage, fetchNextPage]
+  );
 
   useEffect(() => {
-    fetchVideos();
-  }, [fetchVideos]);
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(handleIntersect, {
+      rootMargin: "400px",
+    });
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [handleIntersect]);
+
+  const allVideos = data?.pages.flatMap((page) => page.items) ?? [];
 
   return (
     <div className="w-full max-w-350 mx-auto">
@@ -71,24 +87,21 @@ export default function HomeFeed() {
       </div>
 
       {/* Video grid */}
-      {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8">
-          {Array.from({ length: 12 }).map((_, i) => (
-            <div key={i} className="space-y-3">
-              <div className="aspect-video skeleton rounded-lg" />
-              <div className="flex gap-3">
-                <div className="w-8 h-8 rounded-full skeleton shrink-0" />
-                <div className="flex-1 space-y-2">
-                  <div className="h-4 skeleton w-full" />
-                  <div className="h-3 skeleton w-2/3" />
-                  <div className="h-3 skeleton w-1/3" />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+      {isLoading ? (
+        <VideoGridSkeleton />
       ) : (
-        <VideoGrid videos={videos} />
+        <>
+          <VideoGrid videos={allVideos} />
+
+          {/* Infinite scroll sentinel */}
+          {hasNextPage && (
+            <div ref={sentinelRef} className="flex justify-center py-8">
+              {isFetchingNextPage && (
+                <div className="w-6 h-6 border-2 border-border border-t-text-secondary rounded-full animate-spin" />
+              )}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
