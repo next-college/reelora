@@ -18,7 +18,7 @@ export interface VideoItem {
   views: number;
   ownerId: string;
   createdAt: string;
-  owner?: VideoOwner;
+  owner: VideoOwner;
 }
 
 interface VideosPage {
