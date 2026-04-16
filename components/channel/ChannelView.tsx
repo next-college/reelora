@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
+import { useState } from "react";
 import Image from "next/image";
 import { UserPlusIcon, CheckIcon, BellIcon, EyeIcon } from "@phosphor-icons/react";
 import { motion } from "framer-motion";
 import VideoGrid from "@/components/video/VideoGrid";
+import { useSubscription, useSubscribeMutation } from "@/hooks/useSubscription";
 
-interface ChannelOwner {
+interface ChannelData {
   id: string;
   name: string | null;
   image: string | null;
@@ -31,7 +31,8 @@ interface Video {
 }
 
 interface ChannelViewProps {
-  channelId: string;
+  channel: ChannelData;
+  videos: Video[];
 }
 
 type TabKey = "videos" | "about";
@@ -42,91 +43,12 @@ function formatCount(count: number): string {
   return count.toString();
 }
 
-export default function ChannelView({ channelId }: ChannelViewProps) {
-  const [channel, setChannel] = useState<ChannelOwner | null>(null);
-  const [videos, setVideos] = useState<Video[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function ChannelView({ channel, videos }: ChannelViewProps) {
   const [activeTab, setActiveTab] = useState<TabKey>("videos");
-  const [subscribed, setSubscribed] = useState(false);
 
-  useEffect(() => {
-    async function fetchChannel() {
-      setLoading(true);
-      try {
-        const [channelRes, videosRes] = await Promise.all([
-          fetch(`/api/users/${channelId}`),
-          fetch(`/api/videos?ownerId=${channelId}`),
-        ]);
-
-        if (channelRes.ok) {
-          const data = await channelRes.json();
-          setChannel(data);
-        }
-
-        if (videosRes.ok) {
-          const data = await videosRes.json();
-          setVideos(data.videos || []);
-        }
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchChannel();
-  }, [channelId]);
-
-  async function handleSubscribe() {
-    const prev = subscribed;
-    setSubscribed(!subscribed);
-
-    try {
-      if (prev) {
-        await fetch(`/api/subscriptions/${channelId}`, { method: "DELETE" });
-      } else {
-        await fetch("/api/subscriptions", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ channelId }),
-        });
-      }
-    } catch {
-      setSubscribed(prev);
-    }
-  }
-
-  if (loading) {
-    return (
-      <div className="max-w-350 mx-auto space-y-6">
-        <div className="flex items-center gap-5">
-          <div className="w-20 h-20 rounded-full skeleton" />
-          <div className="space-y-3">
-            <div className="h-6 skeleton w-48" />
-            <div className="h-4 skeleton w-32" />
-          </div>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="space-y-3">
-              <div className="aspect-video skeleton rounded-lg" />
-              <div className="h-4 skeleton w-3/4" />
-              <div className="h-3 skeleton w-1/2" />
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (!channel) {
-    return (
-      <div className="flex flex-col items-center justify-center py-24">
-        <p className="text-sm text-text-secondary font-medium">Channel not found</p>
-        <Link href="/" className="text-xs text-accent-text hover:text-accent mt-2 transition-base">
-          Back to home
-        </Link>
-      </div>
-    );
-  }
+  const { data: subData } = useSubscription(channel.id);
+  const subscribeMutation = useSubscribeMutation(channel.id);
+  const subscribed = subData?.subscribed ?? false;
 
   return (
     <div className="max-w-350 mx-auto">
@@ -166,7 +88,7 @@ export default function ChannelView({ channelId }: ChannelViewProps) {
 
           <div className="flex items-center gap-2 mt-3">
             <button
-              onClick={handleSubscribe}
+              onClick={() => subscribeMutation.mutate(!subscribed)}
               className={`inline-flex items-center gap-1.5 px-5 py-2 rounded-full text-sm font-medium transition-base active:scale-[0.98] ${
                 subscribed
                   ? "bg-surface-hover text-text-secondary border border-border hover:bg-border"
