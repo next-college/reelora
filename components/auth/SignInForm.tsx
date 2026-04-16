@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { signIn } from "next-auth/react";
 import {
   EnvelopeIcon,
   LockIcon,
@@ -15,6 +16,8 @@ import {
 
 export default function SignInForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") || "/";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -29,18 +32,14 @@ export default function SignInForm() {
     setError("");
 
     try {
-      const res = await fetch("/api/auth/callback/credentials", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: email.trim(),
-          password,
-          redirect: false,
-        }),
+      const res = await signIn("credentials", {
+        email: email.trim(),
+        password,
+        redirect: false,
       });
 
-      if (res.ok) {
-        router.push("/");
+      if (res?.ok) {
+        router.push(callbackUrl);
         router.refresh();
       } else {
         setError("Invalid email or password");
@@ -53,7 +52,7 @@ export default function SignInForm() {
   }
 
   async function handleGoogleSignIn() {
-    window.location.href = "/api/auth/signin/google";
+    signIn("google", { callbackUrl });
   }
 
   return (

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import {
   UserIcon,
   EnvelopeIcon,
@@ -56,7 +57,7 @@ export default function SignUpForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          fullName: fullName.trim(),
+          name: fullName.trim(),
           email: email.trim(),
           password,
         }),
@@ -77,7 +78,7 @@ export default function SignUpForm() {
   }
 
   async function handleGoogleSignIn() {
-    window.location.href = "/api/auth/signin/google";
+    signIn("google", { callbackUrl: "/" });
   }
 
   return (
