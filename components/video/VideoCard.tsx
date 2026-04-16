@@ -76,7 +76,7 @@ export default function VideoCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
     >
-      <Link href={`/watch/${id}`} className="group block">
+      <Link href={`/watch/${id}`} transitionTypes={["nav-forward"]} className="group block">
         {/* Thumbnail */}
         <div className="relative aspect-video rounded-lg overflow-hidden bg-surface-hover mb-3">
           {thumbnail ? (

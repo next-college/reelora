@@ -252,7 +252,7 @@ export default function WatchView({ video, related }: WatchViewProps) {
           {related.length > 0 ? (
             <div className="space-y-4">
               {related.map((rv) => (
-                <Link key={rv.id} href={`/watch/${rv.id}`} className="flex gap-3 group">
+                <Link key={rv.id} href={`/watch/${rv.id}`} transitionTypes={["nav-forward"]} className="flex gap-3 group">
                   <div className="relative w-40 shrink-0 aspect-video rounded-lg overflow-hidden bg-surface-hover">
                     {rv.thumbnail ? (
                       <Image

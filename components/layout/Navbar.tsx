@@ -53,7 +53,7 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
   const isActive = (path: string) => pathname === path;
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-40 h-(--navbar-height) bg-surface border-b border-border flex items-center px-4 gap-4">
+    <nav style={{ viewTransitionName: "persistent-nav" }} className="fixed top-0 left-0 right-0 z-40 h-(--navbar-height) bg-surface border-b border-border flex items-center px-4 gap-4">
       {/* Left: Hamburger + Logo */}
       <div className="flex items-center gap-3 shrink-0">
         <button

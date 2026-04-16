@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getChannel, getChannelVideos } from "@/lib/data/channel";
+import DirectionalTransition from "@/components/transitions/DirectionalTransition";
 import ChannelView from "@/components/channel/ChannelView";
 
 interface PageProps {
@@ -34,5 +35,9 @@ export default async function ChannelPage({ params }: PageProps) {
 
   if (!channel) notFound();
 
-  return <ChannelView channel={channel} videos={videos} />;
+  return (
+    <DirectionalTransition>
+      <ChannelView channel={channel} videos={videos} />
+    </DirectionalTransition>
+  );
 }
