@@ -7,12 +7,10 @@ import UploadForm from "./UploadForm";
 export default function UploadView() {
   const router = useRouter();
 
-  function handleUploadComplete(data: { title: string; description: string; tags: string[] }) {
-    // After upload is complete, redirect to the home feed
-    // In production this would redirect to the newly created video
+  function handleUploadComplete(videoId: string) {
     setTimeout(() => {
-      router.push("/");
-    }, 2000);
+      router.push(`/watch/${videoId}`);
+    }, 1500);
   }
 
   return (
