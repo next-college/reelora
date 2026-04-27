@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { EyeIcon, ClockIcon } from "@phosphor-icons/react";
 import { motion } from "framer-motion";
+import { toCloudinaryThumbnail } from "@/lib/cloudinary";
 
 interface VideoCardProps {
   id: string;
@@ -83,7 +84,7 @@ export default function VideoCard({
             <>
               {!imageLoaded && <div className="absolute inset-0 skeleton" />}
               <Image
-                src={thumbnail}
+                src={toCloudinaryThumbnail(thumbnail)!}
                 alt={title}
                 fill
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"

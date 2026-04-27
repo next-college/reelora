@@ -17,6 +17,7 @@ import CommentList from "@/components/comment/CommentList";
 import { useLikes, useLikeMutation } from "@/hooks/useLike";
 import { useSubscription, useSubscribeMutation } from "@/hooks/useSubscription";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { toCloudinaryThumbnail } from "@/lib/cloudinary";
 
 interface VideoOwner {
   id: string;
@@ -97,7 +98,7 @@ export default function WatchView({ video, related }: WatchViewProps) {
         {/* Main column */}
         <div className="flex-1 min-w-0">
           {/* Player */}
-          <VideoPlayer src={video.url} poster={video.thumbnail || undefined} title={video.title} />
+          <VideoPlayer src={video.url} poster={toCloudinaryThumbnail(video.thumbnail) || undefined} title={video.title} />
 
           {/* Title */}
           <h1 className="text-lg font-semibold text-text-primary tracking-tight mt-4 leading-snug">
@@ -256,7 +257,7 @@ export default function WatchView({ video, related }: WatchViewProps) {
                   <div className="relative w-40 shrink-0 aspect-video rounded-lg overflow-hidden bg-surface-hover">
                     {rv.thumbnail ? (
                       <Image
-                        src={rv.thumbnail}
+                        src={toCloudinaryThumbnail(rv.thumbnail)!}
                         alt={rv.title}
                         fill
                         sizes="160px"

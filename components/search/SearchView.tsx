@@ -11,6 +11,7 @@ import {
   ClockIcon,
 } from "@phosphor-icons/react";
 import { motion } from "framer-motion";
+import { toCloudinaryThumbnail } from "@/lib/cloudinary";
 
 interface SearchResult {
   id: string;
@@ -229,7 +230,7 @@ export default function SearchView({ query, sort: initialSort, date: initialDate
                 <div className="relative w-64 shrink-0 aspect-video rounded-lg overflow-hidden bg-surface-hover">
                   {result.thumbnail ? (
                     <Image
-                      src={result.thumbnail}
+                      src={toCloudinaryThumbnail(result.thumbnail)!}
                       alt={result.title}
                       fill
                       sizes="256px"
