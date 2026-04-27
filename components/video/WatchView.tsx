@@ -17,6 +17,7 @@ import CommentList from "@/components/comment/CommentList";
 import { useLikes, useLikeMutation } from "@/hooks/useLike";
 import { useSubscription, useSubscribeMutation } from "@/hooks/useSubscription";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { toCloudinaryThumbnail } from "@/lib/cloudinary";
 
 interface VideoOwner {
   id: string;
@@ -79,7 +80,8 @@ function formatSubscribers(count: number): string {
 
 export default function WatchView({ video, related }: WatchViewProps) {
   const [descExpanded, setDescExpanded] = useState(false);
-  const { requireAuth } = useRequireAuth();
+  const { session, requireAuth } = useRequireAuth();
+  const isOwner = session?.user?.id === video.owner.id;
 
   const { data: likes } = useLikes({ videoId: video.id });
   const likeMutation = useLikeMutation({ videoId: video.id });
@@ -97,7 +99,7 @@ export default function WatchView({ video, related }: WatchViewProps) {
         {/* Main column */}
         <div className="flex-1 min-w-0">
           {/* Player */}
-          <VideoPlayer src={video.url} poster={video.thumbnail || undefined} title={video.title} />
+          <VideoPlayer src={video.url} poster={toCloudinaryThumbnail(video.thumbnail) || undefined} title={video.title} />
 
           {/* Title */}
           <h1 className="text-lg font-semibold text-text-primary tracking-tight mt-4 leading-snug">
@@ -136,26 +138,28 @@ export default function WatchView({ video, related }: WatchViewProps) {
                   {formatSubscribers(video.owner.subscriberCount)} subscribers
                 </p>
               </div>
-              <button
-                onClick={() => requireAuth(() => subscribeMutation.mutate(!subscribed))}
-                className={`ml-2 inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-medium transition-base active:scale-[0.98] ${
-                  subscribed
-                    ? "bg-surface-hover text-text-secondary border border-border hover:bg-border"
-                    : "bg-text-primary text-surface hover:bg-[#333333]"
-                }`}
-              >
-                {subscribed ? (
-                  <>
-                    <CheckIcon size={14} weight="bold" />
-                    Subscribed
-                  </>
-                ) : (
-                  <>
-                    <UserPlusIcon size={14} weight="bold" />
-                    Subscribe
-                  </>
-                )}
-              </button>
+              {!isOwner && (
+                <button
+                  onClick={() => requireAuth(() => subscribeMutation.mutate(!subscribed))}
+                  className={`ml-2 inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-medium transition-base active:scale-[0.98] ${
+                    subscribed
+                      ? "bg-surface-hover text-text-secondary border border-border hover:bg-border"
+                      : "bg-text-primary text-surface hover:bg-[#333333]"
+                  }`}
+                >
+                  {subscribed ? (
+                    <>
+                      <CheckIcon size={14} weight="bold" />
+                      Subscribed
+                    </>
+                  ) : (
+                    <>
+                      <UserPlusIcon size={14} weight="bold" />
+                      Subscribe
+                    </>
+                  )}
+                </button>
+              )}
             </div>
 
             {/* Action buttons */}
@@ -256,7 +260,7 @@ export default function WatchView({ video, related }: WatchViewProps) {
                   <div className="relative w-40 shrink-0 aspect-video rounded-lg overflow-hidden bg-surface-hover">
                     {rv.thumbnail ? (
                       <Image
-                        src={rv.thumbnail}
+                        src={toCloudinaryThumbnail(rv.thumbnail)!}
                         alt={rv.title}
                         fill
                         sizes="160px"
