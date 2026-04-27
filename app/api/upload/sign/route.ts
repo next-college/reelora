@@ -2,7 +2,7 @@ import { v2 as cloudinary } from "cloudinary";
 import { ok, handleRouteError, ApiException } from "@/lib/api/respond";
 import { requireAuth } from "@/lib/api/requireAuth";
 
-const EAGER_THUMBNAIL = "w_640,h_360,c_fill,so_0";
+const EAGER_THUMBNAIL = "w_640,h_360,c_fill,so_0,f_jpg";
 
 export async function POST() {
   try {

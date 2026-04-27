@@ -10,7 +10,7 @@ function subscriptionKey(channelId: string) {
 }
 
 async function fetchSubscription(channelId: string): Promise<SubscriptionState> {
-  const res = await fetch(`/api/subscriptions/${channelId}/status`);
+  const res = await fetch(`/api/subscriptions/${channelId}`);
   if (!res.ok) return { subscribed: false };
   return res.json();
 }
