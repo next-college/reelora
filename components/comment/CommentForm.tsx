@@ -45,7 +45,7 @@ export default function CommentForm({
         body: JSON.stringify({
           body: body.trim(),
           videoId,
-          parentId: parentId || null,
+          ...(parentId ? { parentId } : {}),
         }),
       });
 

@@ -7,6 +7,7 @@ interface SignResponse {
     timestamp: number;
     folder: string;
     eager: string;
+    eager_async: string;
     signature: string;
   };
 }
@@ -51,6 +52,7 @@ async function uploadVideo({
       formData.append("timestamp", String(signedParams.timestamp));
       formData.append("folder", signedParams.folder);
       formData.append("eager", signedParams.eager);
+      formData.append("eager_async", signedParams.eager_async);
       formData.append("signature", signedParams.signature);
 
       const xhr = new XMLHttpRequest();

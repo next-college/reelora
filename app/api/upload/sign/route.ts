@@ -20,7 +20,7 @@ export async function POST() {
     const folder = `reelora/videos/${userId}`;
 
     const signature = cloudinary.utils.api_sign_request(
-      { timestamp, folder, eager: EAGER_THUMBNAIL },
+      { timestamp, folder, eager: EAGER_THUMBNAIL, eager_async: "false" },
       api_secret as string,
     );
 
@@ -31,6 +31,7 @@ export async function POST() {
         timestamp,
         folder,
         eager: EAGER_THUMBNAIL,
+        eager_async: "false",
         signature,
       },
     });
