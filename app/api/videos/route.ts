@@ -54,6 +54,7 @@ export async function GET(req: NextRequest) {
           views: true,
           ownerId: true,
           createdAt: true,
+          owner: { select: { id: true, name: true, image: true } },
         },
       });
 
@@ -91,6 +92,7 @@ export async function GET(req: NextRequest) {
         views: true,
         ownerId: true,
         createdAt: true,
+        owner: { select: { id: true, name: true, image: true } },
       },
     });
 

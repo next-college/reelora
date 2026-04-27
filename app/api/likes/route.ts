@@ -36,36 +36,29 @@ export async function POST(req: NextRequest) {
     const { userId } = await requireAuth();
     const body = toggleLikeSchema.parse(await req.json());
 
-    await prisma.$transaction(async (tx) => {
-      const existing = await tx.like.findFirst({
-        where: {
+    const target = body.videoId
+      ? { userId_videoId: { userId, videoId: body.videoId } }
+      : { userId_commentId: { userId, commentId: body.commentId! } };
+
+    const existing = await prisma.like.findUnique({ where: target });
+
+    if (!existing) {
+      await prisma.like.create({
+        data: {
+          type: body.type,
           userId,
           videoId: body.videoId ?? null,
           commentId: body.commentId ?? null,
         },
       });
-
-      if (!existing) {
-        await tx.like.create({
-          data: {
-            type: body.type,
-            userId,
-            videoId: body.videoId,
-            commentId: body.commentId,
-          },
-        });
-        return;
-      }
-
-      if (existing.type === body.type) {
-        await tx.like.delete({ where: { id: existing.id } });
-      } else {
-        await tx.like.update({
-          where: { id: existing.id },
-          data: { type: body.type },
-        });
-      }
-    });
+    } else if (existing.type === body.type) {
+      await prisma.like.delete({ where: { id: existing.id } });
+    } else {
+      await prisma.like.update({
+        where: { id: existing.id },
+        data: { type: body.type },
+      });
+    }
 
     const counts = await readCounts(
       { videoId: body.videoId, commentId: body.commentId },

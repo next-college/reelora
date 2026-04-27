@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { signOut } from "next-auth/react";
 import Image from "next/image";
 import {
   UserCircleIcon,
@@ -291,7 +292,10 @@ export default function SettingsView({ user }: SettingsViewProps) {
               Sign out of your Reelora account on this device
             </p>
           </div>
-          <button className="inline-flex items-center gap-2 px-4 py-2 border border-border rounded-md text-sm font-medium text-text-secondary hover:bg-surface-hover active:scale-[0.98] transition-base">
+          <button
+            onClick={() => signOut({ callbackUrl: "/" })}
+            className="inline-flex items-center gap-2 px-4 py-2 border border-border rounded-md text-sm font-medium text-text-secondary hover:bg-surface-hover active:scale-[0.98] transition-base"
+          >
             <SignOutIcon size={16} />
             Sign out
           </button>

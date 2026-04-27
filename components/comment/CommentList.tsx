@@ -64,14 +64,22 @@ export default function CommentList({ videoId }: CommentListProps) {
         const res = await fetch(`/api/comments?${params}`);
         if (res.ok) {
           const data = await res.json();
+          const items = (data.items ?? []).map((c: Record<string, unknown>) => ({
+            ...c,
+            likes: c.likes ?? 0,
+            dislikes: c.dislikes ?? 0,
+            userVote: c.userVote ?? null,
+            replies: c.replies ?? [],
+            replyCount: c.replyCount ?? 0,
+          }));
           if (append) {
-            setComments((prev) => [...prev, ...data.comments]);
+            setComments((prev) => [...prev, ...items]);
           } else {
-            setComments(data.comments);
+            setComments(items);
           }
-          setCursor(data.nextCursor);
-          setHasMore(data.hasMore);
-          setTotalCount(data.total);
+          setCursor(data.nextCursor ?? null);
+          setHasMore(!!data.nextCursor);
+          if (!append) setTotalCount(items.length);
         }
       } finally {
         setLoading(false);

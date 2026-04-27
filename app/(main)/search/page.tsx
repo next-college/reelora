@@ -1,3 +1,4 @@
+import DirectionalTransition from "@/components/transitions/DirectionalTransition";
 import SearchView from "@/components/search/SearchView";
 
 export default async function SearchPage({
@@ -6,5 +7,9 @@ export default async function SearchPage({
   searchParams: Promise<{ q?: string; sort?: string; date?: string }>;
 }) {
   const { q, sort, date } = await searchParams;
-  return <SearchView query={q || ""} sort={sort} date={date} />;
+  return (
+    <DirectionalTransition>
+      <SearchView query={q || ""} sort={sort} date={date} />
+    </DirectionalTransition>
+  );
 }

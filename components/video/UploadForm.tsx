@@ -9,11 +9,12 @@ import {
   CheckIcon,
   WarningIcon,
 } from "@phosphor-icons/react";
+import { useUploadVideo } from "@/hooks/useUploadVideo";
 
 type UploadStatus = "idle" | "selected" | "uploading" | "success" | "error";
 
 interface UploadFormProps {
-  onUploadComplete?: (data: { title: string; description: string; tags: string[] }) => void;
+  onUploadComplete?: (videoId: string) => void;
 }
 
 export default function UploadForm({ onUploadComplete }: UploadFormProps) {
@@ -28,6 +29,8 @@ export default function UploadForm({ onUploadComplete }: UploadFormProps) {
   const [progress, setProgress] = useState(0);
   const [dragOver, setDragOver] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+
+  const uploadMutation = useUploadVideo();
 
   const handleFile = useCallback((selectedFile: File) => {
     if (!selectedFile.type.startsWith("video/")) {
@@ -92,29 +95,26 @@ export default function UploadForm({ onUploadComplete }: UploadFormProps) {
     setStatus("uploading");
     setProgress(0);
 
-    // Simulate upload progress - replace with real Cloudinary upload
-    const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 95) {
-          clearInterval(interval);
-          return 95;
-        }
-        return prev + Math.random() * 15;
-      });
-    }, 300);
-
-    try {
-      // TODO: Replace with actual Cloudinary upload
-      await new Promise((resolve) => setTimeout(resolve, 2500));
-      clearInterval(interval);
-      setProgress(100);
-      setStatus("success");
-      onUploadComplete?.({ title: title.trim(), description: description.trim(), tags });
-    } catch {
-      clearInterval(interval);
-      setStatus("error");
-      setErrorMessage("Upload failed. Please try again.");
-    }
+    uploadMutation.mutate(
+      {
+        file,
+        title: title.trim(),
+        description: description.trim() || undefined,
+        tags: tags.length > 0 ? tags : undefined,
+        onProgress: (percent) => setProgress(percent),
+      },
+      {
+        onSuccess: (result) => {
+          setProgress(100);
+          setStatus("success");
+          onUploadComplete?.(result.videoId);
+        },
+        onError: () => {
+          setStatus("error");
+          setErrorMessage("Upload failed. Please try again.");
+        },
+      }
+    );
   }
 
   function reset() {
@@ -325,10 +325,10 @@ export default function UploadForm({ onUploadComplete }: UploadFormProps) {
               <div className="flex items-center gap-3 pt-2">
                 <button
                   type="submit"
-                  disabled={!title.trim()}
+                  disabled={!title.trim() || uploadMutation.isPending}
                   className="px-6 py-2.5 bg-text-primary text-surface text-sm font-medium rounded-md hover:bg-[#333333] active:scale-[0.98] transition-base disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  Publish
+                  {uploadMutation.isPending ? "Uploading..." : "Publish"}
                 </button>
                 <button
                   type="button"

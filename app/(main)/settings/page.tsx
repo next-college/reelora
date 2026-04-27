@@ -1,5 +1,10 @@
+import DirectionalTransition from "@/components/transitions/DirectionalTransition";
 import SettingsView from "@/components/settings/SettingsView";
 
 export default function SettingsPage() {
-  return <SettingsView />;
+  return (
+    <DirectionalTransition>
+      <SettingsView />
+    </DirectionalTransition>
+  );
 }

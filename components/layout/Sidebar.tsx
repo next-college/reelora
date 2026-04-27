@@ -68,6 +68,7 @@ export default function Sidebar({ isOpen }: SidebarProps) {
 
   return (
     <aside
+      style={{ viewTransitionName: "persistent-sidebar" }}
       className={`fixed left-0 top-(--navbar-height) bottom-0 z-30 bg-surface border-r border-border transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] overflow-y-auto overflow-x-hidden ${
         isOpen ? "w-(--sidebar-width)" : "w-16"
       }`}
