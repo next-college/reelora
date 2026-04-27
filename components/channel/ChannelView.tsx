@@ -46,7 +46,8 @@ function formatCount(count: number): string {
 
 export default function ChannelView({ channel, videos }: ChannelViewProps) {
   const [activeTab, setActiveTab] = useState<TabKey>("videos");
-  const { requireAuth } = useRequireAuth();
+  const { session, requireAuth } = useRequireAuth();
+  const isOwnChannel = session?.user?.id === channel.id;
 
   const { data: subData } = useSubscription(channel.id);
   const subscribeMutation = useSubscribeMutation(channel.id);
@@ -88,33 +89,35 @@ export default function ChannelView({ channel, videos }: ChannelViewProps) {
             <span className="font-mono">{formatCount(channel.videoCount)} videos</span>
           </div>
 
-          <div className="flex items-center gap-2 mt-3">
-            <button
-              onClick={() => requireAuth(() => subscribeMutation.mutate(!subscribed))}
-              className={`inline-flex items-center gap-1.5 px-5 py-2 rounded-full text-sm font-medium transition-base active:scale-[0.98] ${
-                subscribed
-                  ? "bg-surface-hover text-text-secondary border border-border hover:bg-border"
-                  : "bg-text-primary text-surface hover:bg-[#333333]"
-              }`}
-            >
-              {subscribed ? (
-                <>
-                  <CheckIcon size={16} weight="bold" />
-                  Subscribed
-                </>
-              ) : (
-                <>
-                  <UserPlusIcon size={16} weight="bold" />
-                  Subscribe
-                </>
-              )}
-            </button>
-            {subscribed && (
-              <button className="p-2 rounded-full border border-border hover:bg-surface-hover transition-base text-text-secondary">
-                <BellIcon size={16} />
+          {!isOwnChannel && (
+            <div className="flex items-center gap-2 mt-3">
+              <button
+                onClick={() => requireAuth(() => subscribeMutation.mutate(!subscribed))}
+                className={`inline-flex items-center gap-1.5 px-5 py-2 rounded-full text-sm font-medium transition-base active:scale-[0.98] ${
+                  subscribed
+                    ? "bg-surface-hover text-text-secondary border border-border hover:bg-border"
+                    : "bg-text-primary text-surface hover:bg-[#333333]"
+                }`}
+              >
+                {subscribed ? (
+                  <>
+                    <CheckIcon size={16} weight="bold" />
+                    Subscribed
+                  </>
+                ) : (
+                  <>
+                    <UserPlusIcon size={16} weight="bold" />
+                    Subscribe
+                  </>
+                )}
               </button>
-            )}
-          </div>
+              {subscribed && (
+                <button className="p-2 rounded-full border border-border hover:bg-surface-hover transition-base text-text-secondary">
+                  <BellIcon size={16} />
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </motion.div>
 
