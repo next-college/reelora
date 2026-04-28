@@ -38,6 +38,13 @@ export function error(
 }
 
 export function handleRouteError(err: unknown) {
+  const digest = (err as { digest?: unknown } | null)?.digest;
+  if (
+    typeof digest === "string" &&
+    (digest.startsWith("NEXT_") || digest === "HANGING_PROMISE_REJECTION")
+  ) {
+    throw err;
+  }
   if (err instanceof ApiException) {
     return error(err.code, err.message, err.details);
   }

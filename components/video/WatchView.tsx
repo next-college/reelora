@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -56,6 +56,7 @@ interface RelatedVideo {
 interface WatchViewProps {
   video: VideoData;
   related: RelatedVideo[];
+  poster: ReactNode;
 }
 
 function formatViews(views: number): string {
@@ -78,8 +79,9 @@ function formatSubscribers(count: number): string {
   return count.toString();
 }
 
-export default function WatchView({ video, related }: WatchViewProps) {
+export default function WatchView({ video, related, poster }: WatchViewProps) {
   const [descExpanded, setDescExpanded] = useState(false);
+  const [playing, setPlaying] = useState(false);
   const { session, requireAuth } = useRequireAuth();
   const isOwner = session?.user?.id === video.owner.id;
 
@@ -98,8 +100,23 @@ export default function WatchView({ video, related }: WatchViewProps) {
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Main column */}
         <div className="flex-1 min-w-0">
-          {/* Player */}
-          <VideoPlayer src={video.url} poster={toCloudinaryThumbnail(video.thumbnail) || undefined} title={video.title} />
+          {/* Player — server-rendered poster shell underneath, video player overlays */}
+          <div className="relative w-full aspect-video rounded-lg overflow-hidden bg-text-primary">
+            <div
+              className={`absolute inset-0 pointer-events-none transition-opacity duration-300 ${
+                playing ? "opacity-0" : "opacity-100"
+              }`}
+            >
+              {poster}
+            </div>
+            <VideoPlayer
+              src={video.url}
+              poster={toCloudinaryThumbnail(video.thumbnail) || undefined}
+              title={video.title}
+              playing={playing}
+              onPlayingChange={setPlaying}
+            />
+          </div>
 
           {/* Title */}
           <h1 className="text-lg font-semibold text-text-primary tracking-tight mt-4 leading-snug">

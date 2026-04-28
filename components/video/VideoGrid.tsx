@@ -72,7 +72,7 @@ export default function VideoGrid({ videos, columns = "default" }: VideoGridProp
       initial="hidden"
       animate="visible"
     >
-      {videos.map((video) => (
+      {videos.map((video, i) => (
         <VideoCard
           key={video.id}
           id={video.id}
@@ -82,6 +82,7 @@ export default function VideoGrid({ videos, columns = "default" }: VideoGridProp
           views={video.views}
           createdAt={video.createdAt}
           owner={video.owner}
+          priority={i < 4}
         />
       ))}
     </motion.div>
