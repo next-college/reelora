@@ -19,6 +19,7 @@ interface VideoCardProps {
     name: string | null;
     image: string | null;
   };
+  priority?: boolean;
 }
 
 function formatViews(views: number): string {
@@ -68,6 +69,7 @@ export default function VideoCard({
   views,
   createdAt,
   owner,
+  priority = false,
 }: VideoCardProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
 
@@ -92,6 +94,7 @@ export default function VideoCard({
               alt={title}
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+              priority={priority}
               className={`object-cover transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.03] ${
                 imageLoaded ? "opacity-100" : "opacity-0"
               }`}
