@@ -18,6 +18,8 @@ interface VideoPlayerProps {
   src: string;
   poster?: string;
   title?: string;
+  playing: boolean;
+  onPlayingChange: (playing: boolean) => void;
 }
 
 function formatTime(seconds: number): string {
@@ -31,7 +33,7 @@ function formatTime(seconds: number): string {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-export default function VideoPlayer({ src, poster, title }: VideoPlayerProps) {
+export default function VideoPlayer({ src, poster, title, playing, onPlayingChange }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const progressRef = useRef<HTMLDivElement>(null);
@@ -39,7 +41,6 @@ export default function VideoPlayer({ src, poster, title }: VideoPlayerProps) {
 
   const { volume, muted, setVolume: storeSetVolume, toggleMute: storeToggleMute } = usePlayerStore();
 
-  const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [buffered, setBuffered] = useState(0);
@@ -52,12 +53,12 @@ export default function VideoPlayer({ src, poster, title }: VideoPlayerProps) {
     if (!video) return;
     if (video.paused) {
       video.play();
-      setPlaying(true);
+      onPlayingChange(true);
     } else {
       video.pause();
-      setPlaying(false);
+      onPlayingChange(false);
     }
-  }, []);
+  }, [onPlayingChange]);
 
   const toggleMute = useCallback(() => {
     const video = videoRef.current;
@@ -142,7 +143,7 @@ export default function VideoPlayer({ src, poster, title }: VideoPlayerProps) {
     }
 
     function onEnded() {
-      setPlaying(false);
+      onPlayingChange(false);
       setShowControls(true);
     }
 
@@ -159,7 +160,7 @@ export default function VideoPlayer({ src, poster, title }: VideoPlayerProps) {
       video.removeEventListener("canplay", onCanPlay);
       video.removeEventListener("ended", onEnded);
     };
-  }, []);
+  }, [onPlayingChange]);
 
   useEffect(() => {
     function onFullscreenChange() {
@@ -207,7 +208,7 @@ export default function VideoPlayer({ src, poster, title }: VideoPlayerProps) {
   return (
     <div
       ref={containerRef}
-      className="relative w-full aspect-video bg-text-primary rounded-lg overflow-hidden group select-none"
+      className="absolute inset-0 group select-none"
       onMouseMove={resetHideTimer}
       onMouseLeave={() => playing && setShowControls(false)}
     >
@@ -218,7 +219,7 @@ export default function VideoPlayer({ src, poster, title }: VideoPlayerProps) {
         className="w-full h-full object-contain cursor-pointer"
         onClick={togglePlay}
         playsInline
-        preload="metadata"
+        preload="none"
       />
 
       {/* Loading spinner */}

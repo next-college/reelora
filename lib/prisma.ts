@@ -2,7 +2,7 @@
    to prevent multiple instances of PrismaClient from being created during hot reloading in development mode.
 */
 import "server-only";
-import { PrismaClient } from "@/lib/generated/prisma";
+import { PrismaClient } from "@/lib/generated/prisma/client";
 
 const prismaClientSingleton = () => {
   return new PrismaClient();
