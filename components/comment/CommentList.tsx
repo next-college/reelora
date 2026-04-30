@@ -90,6 +90,11 @@ export default function CommentList({ videoId }: CommentListProps) {
     fetchComments(null);
   }
 
+  function handleDeleteComment(id: string) {
+    setComments((prev) => prev.filter((c) => c.id !== id));
+    setTotalCount((c) => Math.max(0, c - 1));
+  }
+
   return (
     <section className="w-full">
       {/* Header */}
@@ -161,6 +166,7 @@ export default function CommentList({ videoId }: CommentListProps) {
                 userVote={comment.userVote}
                 replies={comment.replies}
                 replyCount={comment.replyCount}
+                onDelete={handleDeleteComment}
               />
             ))}
           </div>
