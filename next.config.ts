@@ -6,6 +6,9 @@ const nextConfig: NextConfig = {
   experimental: {
     viewTransition: true,
   },
+  outputFileTracingIncludes: {
+    "/**/*": ["./lib/generated/prisma/**/*"],
+  },
   images: {
     remotePatterns: [
       {
