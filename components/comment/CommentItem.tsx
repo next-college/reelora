@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ThumbsUpIcon, ThumbsDownIcon, ChatCircleIcon, DotsThreeIcon } from "@phosphor-icons/react";
@@ -75,6 +75,35 @@ export default function CommentItem({
   const [currentVote, setCurrentVote] = useState(userVote);
   const [likeCount, setLikeCount] = useState(likes);
   const [dislikeCount, setDislikeCount] = useState(dislikes);
+  const [loadedReplies, setLoadedReplies] = useState<Reply[]>(replies);
+  const [loadedReplyCount, setLoadedReplyCount] = useState(replyCount);
+  const [repliesLoading, setRepliesLoading] = useState(false);
+
+  const fetchReplies = useCallback(async () => {
+    setRepliesLoading(true);
+    try {
+      const res = await fetch(`/api/comments?parentId=${id}&limit=50`);
+      if (res.ok) {
+        const data = await res.json();
+        const items: Reply[] = (data.items ?? []).slice().reverse();
+        setLoadedReplies(items);
+        setLoadedReplyCount(items.length);
+      }
+    } finally {
+      setRepliesLoading(false);
+    }
+  }, [id]);
+
+  const expandReplies = useCallback(async () => {
+    setShowReplies(true);
+    if (loadedReplies.length >= loadedReplyCount) return;
+    await fetchReplies();
+  }, [loadedReplies.length, loadedReplyCount, fetchReplies]);
+
+  const handleReplyAdded = useCallback(async () => {
+    setShowReplies(true);
+    await fetchReplies();
+  }, [fetchReplies]);
 
   async function handleVote(type: "LIKE" | "DISLIKE") {
     const prevVote = currentVote;
@@ -203,20 +232,23 @@ export default function CommentItem({
                 placeholder="Add a reply..."
                 autoFocus
                 onCancel={() => setShowReplyForm(false)}
-                onSubmit={() => setShowReplyForm(false)}
+                onSubmit={() => {
+                  setShowReplyForm(false);
+                  handleReplyAdded();
+                }}
               />
             </div>
           )}
 
           {/* Replies */}
-          {replyCount > 0 && (
+          {loadedReplyCount > 0 && (
             <div className="mt-2">
               {!showReplies ? (
                 <button
-                  onClick={() => setShowReplies(true)}
+                  onClick={expandReplies}
                   className="text-xs font-medium text-amber-100 hover:text-amber-500 transition-base"
                 >
-                  View {replyCount} {replyCount === 1 ? "reply" : "replies"}
+                  View {loadedReplyCount} {loadedReplyCount === 1 ? "reply" : "replies"}
                 </button>
               ) : (
                 <>
@@ -226,7 +258,16 @@ export default function CommentItem({
                   >
                     Hide replies
                   </button>
-                  <ReplyList replies={replies} videoId={videoId} parentId={id} />
+                  {repliesLoading && loadedReplies.length === 0 ? (
+                    <p className="text-xs text-text-muted">Loading replies...</p>
+                  ) : (
+                    <ReplyList
+                      replies={loadedReplies}
+                      videoId={videoId}
+                      parentId={id}
+                      onReplyAdded={handleReplyAdded}
+                    />
+                  )}
                 </>
               )}
             </div>

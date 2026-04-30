@@ -6,23 +6,17 @@ import { likeTargetSchema, toggleLikeSchema } from "@/lib/schemas/like";
 
 type Target = { videoId?: string; commentId?: string };
 
-async function readCounts(target: Target, userId: string | null) {
-  const where = {
-    videoId: target.videoId ?? null,
-    commentId: target.commentId ?? null,
-  };
-
+async function readVideoCounts(videoId: string, userId: string | null) {
   const [likeCount, dislikeCount, myVote] = await Promise.all([
-    prisma.like.count({ where: { ...where, type: "LIKE" } }),
-    prisma.like.count({ where: { ...where, type: "DISLIKE" } }),
+    prisma.videoLike.count({ where: { videoId, type: "LIKE" } }),
+    prisma.videoLike.count({ where: { videoId, type: "DISLIKE" } }),
     userId
-      ? prisma.like.findFirst({
-          where: { ...where, userId },
+      ? prisma.videoLike.findUnique({
+          where: { userId_videoId: { userId, videoId } },
           select: { type: true },
         })
       : Promise.resolve(null),
   ]);
-
   return {
     liked: myVote?.type === "LIKE",
     disliked: myVote?.type === "DISLIKE",
@@ -31,33 +25,69 @@ async function readCounts(target: Target, userId: string | null) {
   };
 }
 
+async function readCommentCounts(commentId: string, userId: string | null) {
+  const [likeCount, dislikeCount, myVote] = await Promise.all([
+    prisma.commentLike.count({ where: { commentId, type: "LIKE" } }),
+    prisma.commentLike.count({ where: { commentId, type: "DISLIKE" } }),
+    userId
+      ? prisma.commentLike.findUnique({
+          where: { userId_commentId: { userId, commentId } },
+          select: { type: true },
+        })
+      : Promise.resolve(null),
+  ]);
+  return {
+    liked: myVote?.type === "LIKE",
+    disliked: myVote?.type === "DISLIKE",
+    likeCount,
+    dislikeCount,
+  };
+}
+
+async function readCounts(target: Target, userId: string | null) {
+  if (target.videoId) return readVideoCounts(target.videoId, userId);
+  return readCommentCounts(target.commentId!, userId);
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { userId } = await requireAuth();
     const body = toggleLikeSchema.parse(await req.json());
 
-    const target = body.videoId
-      ? { userId_videoId: { userId, videoId: body.videoId } }
-      : { userId_commentId: { userId, commentId: body.commentId! } };
-
-    const existing = await prisma.like.findUnique({ where: target });
-
-    if (!existing) {
-      await prisma.like.create({
-        data: {
-          type: body.type,
-          userId,
-          videoId: body.videoId ?? null,
-          commentId: body.commentId ?? null,
-        },
+    if (body.videoId) {
+      const videoId = body.videoId;
+      const existing = await prisma.videoLike.findUnique({
+        where: { userId_videoId: { userId, videoId } },
       });
-    } else if (existing.type === body.type) {
-      await prisma.like.delete({ where: { id: existing.id } });
+      if (!existing) {
+        await prisma.videoLike.create({
+          data: { type: body.type, userId, videoId },
+        });
+      } else if (existing.type === body.type) {
+        await prisma.videoLike.delete({ where: { id: existing.id } });
+      } else {
+        await prisma.videoLike.update({
+          where: { id: existing.id },
+          data: { type: body.type },
+        });
+      }
     } else {
-      await prisma.like.update({
-        where: { id: existing.id },
-        data: { type: body.type },
+      const commentId = body.commentId!;
+      const existing = await prisma.commentLike.findUnique({
+        where: { userId_commentId: { userId, commentId } },
       });
+      if (!existing) {
+        await prisma.commentLike.create({
+          data: { type: body.type, userId, commentId },
+        });
+      } else if (existing.type === body.type) {
+        await prisma.commentLike.delete({ where: { id: existing.id } });
+      } else {
+        await prisma.commentLike.update({
+          where: { id: existing.id },
+          data: { type: body.type },
+        });
+      }
     }
 
     const counts = await readCounts(

@@ -33,7 +33,7 @@ export async function DELETE(_req: NextRequest, ctx: RouteContext) {
     const allIds = [id, ...replyIds];
 
     await prisma.$transaction([
-      prisma.like.deleteMany({ where: { commentId: { in: allIds } } }),
+      prisma.commentLike.deleteMany({ where: { commentId: { in: allIds } } }),
       ...(replyIds.length > 0
         ? [prisma.comment.deleteMany({ where: { id: { in: replyIds } } })]
         : []),
