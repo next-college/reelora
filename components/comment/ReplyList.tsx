@@ -27,6 +27,7 @@ interface ReplyListProps {
   replies: Reply[];
   videoId: string;
   parentId: string;
+  onReplyAdded?: () => void;
 }
 
 function formatTimeAgo(dateStr: string): string {
@@ -50,10 +51,12 @@ function ReplyItem({
   reply,
   videoId,
   parentId,
+  onReplyAdded,
 }: {
   reply: Reply;
   videoId: string;
   parentId: string;
+  onReplyAdded?: () => void;
 }) {
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [currentVote, setCurrentVote] = useState(reply.userVote);
@@ -172,7 +175,10 @@ function ReplyItem({
               placeholder={`Reply to ${reply.author.name || "User"}...`}
               autoFocus
               onCancel={() => setShowReplyForm(false)}
-              onSubmit={() => setShowReplyForm(false)}
+              onSubmit={() => {
+                setShowReplyForm(false);
+                onReplyAdded?.();
+              }}
             />
           </div>
         )}
@@ -181,7 +187,7 @@ function ReplyItem({
   );
 }
 
-export default function ReplyList({ replies, videoId, parentId }: ReplyListProps) {
+export default function ReplyList({ replies, videoId, parentId, onReplyAdded }: ReplyListProps) {
   if (replies.length === 0) return null;
 
   return (
@@ -193,6 +199,7 @@ export default function ReplyList({ replies, videoId, parentId }: ReplyListProps
             reply={reply}
             videoId={videoId}
             parentId={parentId}
+            onReplyAdded={onReplyAdded}
           />
         ))}
       </div>
