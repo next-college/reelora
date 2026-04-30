@@ -10,13 +10,47 @@ import {
   UserCircleIcon,
 } from "@phosphor-icons/react";
 
-const navItems = [
-  { href: "/", label: "Home", icon: HouseIcon },
-  { href: "/explore", label: "Explore", icon: CompassIcon },
-  { href: "/upload", label: "Create", icon: PlusCircleIcon },
-  { href: "/collections", label: "Library", icon: FolderIcon },
-  { href: "/settings", label: "You", icon: UserCircleIcon },
+type NavItem = {
+  href: string;
+  label: string;
+  icon: typeof HouseIcon;
+  match: "exact" | string[];
+};
+
+const navItems: NavItem[] = [
+  { href: "/", label: "Home", icon: HouseIcon, match: "exact" },
+  {
+    href: "/explore",
+    label: "Explore",
+    icon: CompassIcon,
+    match: ["/explore"],
+  },
+  {
+    href: "/upload",
+    label: "Create",
+    icon: PlusCircleIcon,
+    match: ["/upload"],
+  },
+  {
+    href: "/library",
+    label: "Library",
+    icon: FolderIcon,
+    match: ["/library", "/history", "/liked", "/collections"],
+  },
+  {
+    href: "/you",
+    label: "You",
+    icon: UserCircleIcon,
+    match: ["/you", "/settings"],
+  },
 ];
+
+function isActive(item: NavItem, pathname: string): boolean {
+  if (item.match === "exact") return pathname === item.href;
+  return item.match.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
+}
 
 export default function MobileNav() {
   const pathname = usePathname();
@@ -25,7 +59,7 @@ export default function MobileNav() {
     <nav style={{ viewTransitionName: "persistent-mobile-nav" }} className="fixed bottom-0 left-0 right-0 z-40 bg-bg-surface border-t border-border-default md:hidden">
       <div className="flex items-center justify-around px-2 py-1">
         {navItems.map((item) => {
-          const active = pathname === item.href;
+          const active = isActive(item, pathname);
           const Icon = item.icon;
           return (
             <Link
