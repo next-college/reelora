@@ -49,8 +49,8 @@ export default function CommentList({ videoId }: CommentListProps) {
   const [loadingMore, setLoadingMore] = useState(false);
 
   const fetchComments = useCallback(
-    async (append = false) => {
-      if (append) setLoadingMore(true);
+    async (appendCursor: string | null) => {
+      if (appendCursor) setLoadingMore(true);
       else setLoading(true);
 
       try {
@@ -59,44 +59,35 @@ export default function CommentList({ videoId }: CommentListProps) {
           sort,
           limit: "20",
         });
-        if (append && cursor) params.set("cursor", cursor);
+        if (appendCursor) params.set("cursor", appendCursor);
 
         const res = await fetch(`/api/comments?${params}`);
         if (res.ok) {
           const data = await res.json();
-          const items = (data.items ?? []).map((c: Record<string, unknown>) => ({
-            ...c,
-            likes: c.likes ?? 0,
-            dislikes: c.dislikes ?? 0,
-            userVote: c.userVote ?? null,
-            replies: c.replies ?? [],
-            replyCount: c.replyCount ?? 0,
-          }));
-          if (append) {
+          const items: Comment[] = data.items ?? [];
+          if (appendCursor) {
             setComments((prev) => [...prev, ...items]);
           } else {
             setComments(items);
+            setTotalCount(items.length);
           }
           setCursor(data.nextCursor ?? null);
           setHasMore(!!data.nextCursor);
-          if (!append) setTotalCount(items.length);
         }
       } finally {
         setLoading(false);
         setLoadingMore(false);
       }
     },
-    [videoId, sort, cursor]
+    [videoId, sort]
   );
 
   useEffect(() => {
-    setCursor(null);
-    fetchComments(false);
-  }, [videoId, sort]);
+    fetchComments(null);
+  }, [fetchComments]);
 
   function handleNewComment() {
-    setCursor(null);
-    fetchComments(false);
+    fetchComments(null);
   }
 
   return (
@@ -177,7 +168,7 @@ export default function CommentList({ videoId }: CommentListProps) {
           {hasMore && (
             <div className="flex justify-center mt-6">
               <button
-                onClick={() => fetchComments(true)}
+                onClick={() => fetchComments(cursor)}
                 disabled={loadingMore}
                 className="inline-flex items-center gap-2 px-4 py-2 text-xs font-medium text-text-secondary hover:text-text-primary hover:bg-bg-hover rounded-lg transition-base disabled:opacity-50"
               >
