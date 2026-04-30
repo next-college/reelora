@@ -1,23 +1,21 @@
+import type { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import DirectionalTransition from "@/components/transitions/DirectionalTransition";
-import SettingsView from "@/components/settings/SettingsView";
+import YouView from "@/components/you/YouView";
 import SignedOutView from "@/components/you/SignedOutView";
 
-export default async function SettingsPage() {
+export const metadata: Metadata = {
+  title: "You - Reelora",
+};
+
+export default async function YouPage() {
   const session = await getServerSession(authOptions);
 
   return (
     <DirectionalTransition>
       {session?.user?.id ? (
-        <SettingsView
-          user={{
-            id: session.user.id,
-            name: session.user.name ?? "",
-            email: session.user.email ?? "",
-            image: session.user.image ?? null,
-          }}
-        />
+        <YouView userId={session.user.id} />
       ) : (
         <SignedOutView />
       )}

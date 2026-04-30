@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { UserPlusIcon, CheckIcon, BellIcon, EyeIcon } from "@phosphor-icons/react";
+import Link from "next/link";
+import { UserPlusIcon, CheckIcon, BellIcon, EyeIcon, GearSixIcon } from "@phosphor-icons/react";
 import { motion } from "framer-motion";
 import VideoGrid from "@/components/video/VideoGrid";
 import { useSubscription, useSubscribeMutation } from "@/hooks/useSubscription";
@@ -88,6 +89,19 @@ export default function ChannelView({ channel, videos }: ChannelViewProps) {
             <span>&middot;</span>
             <span className="font-mono">{formatCount(channel.videoCount)} videos</span>
           </div>
+
+          {isOwnChannel && (
+            <div className="flex items-center gap-2 mt-3">
+              <Link
+                href="/settings"
+                aria-label="Channel settings"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium border border-border-default text-text-secondary hover:bg-bg-hover active:scale-[0.98] transition-base"
+              >
+                <GearSixIcon size={16} weight="bold" />
+                Settings
+              </Link>
+            </div>
+          )}
 
           {!isOwnChannel && (
             <div className="flex items-center gap-2 mt-3">
