@@ -3,9 +3,14 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ThumbsUpIcon, ThumbsDownIcon, ChatCircleIcon } from "@phosphor-icons/react";
+import { ThumbsUpIcon, ThumbsDownIcon, ChatCircleIcon, TrashIcon } from "@phosphor-icons/react";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
+import { useSession } from "next-auth/react";
 import CommentForm from "./CommentForm";
+import OverflowMenu from "@/components/ui/OverflowMenu";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import CommentBody from "./CommentBody";
 
 interface ReplyAuthor {
   id: string;
@@ -28,6 +33,7 @@ interface ReplyListProps {
   videoId: string;
   parentId: string;
   onReplyAdded?: () => void;
+  onReplyDeleted?: (replyId: string) => void;
 }
 
 function formatTimeAgo(dateStr: string): string {
@@ -52,16 +58,38 @@ function ReplyItem({
   videoId,
   parentId,
   onReplyAdded,
+  onReplyDeleted,
 }: {
   reply: Reply;
   videoId: string;
   parentId: string;
   onReplyAdded?: () => void;
+  onReplyDeleted?: (replyId: string) => void;
 }) {
+  const { data: session } = useSession();
+  const isAuthor = session?.user?.id === reply.author.id;
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [currentVote, setCurrentVote] = useState(reply.userVote);
   const [likeCount, setLikeCount] = useState(reply.likes);
   const [dislikeCount, setDislikeCount] = useState(reply.dislikes);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  function requestDelete(close: () => void) {
+    close();
+    setConfirmOpen(true);
+  }
+
+  async function handleConfirmDelete() {
+    try {
+      const res = await fetch(`/api/comments/${reply.id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
+      setConfirmOpen(false);
+      onReplyDeleted?.(reply.id);
+      toast.success("Reply deleted");
+    } catch {
+      toast.error("Couldn't delete reply");
+    }
+  }
 
   async function handleVote(type: "LIKE" | "DISLIKE") {
     const prevVote = currentVote;
@@ -130,9 +158,10 @@ function ReplyItem({
           <span className="text-xs text-text-muted">{formatTimeAgo(reply.createdAt)}</span>
         </div>
 
-        <p className="text-sm text-text-primary mt-0.5 leading-relaxed whitespace-pre-wrap wrap-break-word">
-          {reply.body}
-        </p>
+        <CommentBody
+          body={reply.body}
+          className="text-sm text-text-primary mt-0.5 leading-relaxed whitespace-pre-wrap wrap-break-word"
+        />
 
         <div className="flex items-center gap-1 mt-1.5">
           <button
@@ -165,6 +194,25 @@ function ReplyItem({
             <ChatCircleIcon size={12} />
             Reply
           </button>
+
+          {isAuthor && (
+            <OverflowMenu
+              ariaLabel="Reply options"
+              iconSize={14}
+              triggerClassName="p-1 rounded-md text-text-muted hover:text-text-secondary hover:bg-bg-hover transition-base opacity-0 group-hover:opacity-100 focus:opacity-100"
+            >
+              {(close) => (
+                <button
+                  type="button"
+                  onClick={() => requestDelete(close)}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-vermillion-100 hover:bg-vermillion-700/20 transition-base"
+                >
+                  <TrashIcon size={14} />
+                  Delete
+                </button>
+              )}
+            </OverflowMenu>
+          )}
         </div>
 
         {showReplyForm && (
@@ -174,6 +222,7 @@ function ReplyItem({
               parentId={parentId}
               placeholder={`Reply to ${reply.author.name || "User"}...`}
               autoFocus
+              mentionName={reply.author.name}
               onCancel={() => setShowReplyForm(false)}
               onSubmit={() => {
                 setShowReplyForm(false);
@@ -183,11 +232,26 @@ function ReplyItem({
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Delete this reply?"
+        description="This can't be undone."
+        confirmLabel="Delete"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setConfirmOpen(false)}
+      />
     </motion.div>
   );
 }
 
-export default function ReplyList({ replies, videoId, parentId, onReplyAdded }: ReplyListProps) {
+export default function ReplyList({
+  replies,
+  videoId,
+  parentId,
+  onReplyAdded,
+  onReplyDeleted,
+}: ReplyListProps) {
   if (replies.length === 0) return null;
 
   return (
@@ -200,6 +264,7 @@ export default function ReplyList({ replies, videoId, parentId, onReplyAdded }: 
             videoId={videoId}
             parentId={parentId}
             onReplyAdded={onReplyAdded}
+            onReplyDeleted={onReplyDeleted}
           />
         ))}
       </div>

@@ -3,10 +3,15 @@
 import { useState, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ThumbsUpIcon, ThumbsDownIcon, ChatCircleIcon, DotsThreeIcon } from "@phosphor-icons/react";
+import { ThumbsUpIcon, ThumbsDownIcon, ChatCircleIcon, TrashIcon } from "@phosphor-icons/react";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
+import { useSession } from "next-auth/react";
 import CommentForm from "./CommentForm";
 import ReplyList from "./ReplyList";
+import OverflowMenu from "@/components/ui/OverflowMenu";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import CommentBody from "./CommentBody";
 
 interface CommentAuthor {
   id: string;
@@ -35,6 +40,7 @@ interface CommentItemProps {
   userVote: "LIKE" | "DISLIKE" | null;
   replies: Reply[];
   replyCount: number;
+  onDelete: (id: string) => void;
 }
 
 function formatTimeAgo(dateStr: string): string {
@@ -69,7 +75,10 @@ export default function CommentItem({
   userVote,
   replies,
   replyCount,
+  onDelete,
 }: CommentItemProps) {
+  const { data: session } = useSession();
+  const isAuthor = session?.user?.id === author.id;
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [showReplies, setShowReplies] = useState(false);
   const [currentVote, setCurrentVote] = useState(userVote);
@@ -78,6 +87,29 @@ export default function CommentItem({
   const [loadedReplies, setLoadedReplies] = useState<Reply[]>(replies);
   const [loadedReplyCount, setLoadedReplyCount] = useState(replyCount);
   const [repliesLoading, setRepliesLoading] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  function deleteReplyLocal(replyId: string) {
+    setLoadedReplies((prev) => prev.filter((r) => r.id !== replyId));
+    setLoadedReplyCount((c) => Math.max(0, c - 1));
+  }
+
+  function requestDelete(close: () => void) {
+    close();
+    setConfirmOpen(true);
+  }
+
+  async function handleConfirmDelete() {
+    try {
+      const res = await fetch(`/api/comments/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
+      setConfirmOpen(false);
+      onDelete(id);
+      toast.success("Comment deleted");
+    } catch {
+      toast.error("Couldn't delete comment");
+    }
+  }
 
   const fetchReplies = useCallback(async () => {
     setRepliesLoading(true);
@@ -177,9 +209,10 @@ export default function CommentItem({
           </div>
 
           {/* Body */}
-          <p className="text-sm text-text-primary mt-1 leading-relaxed whitespace-pre-wrap wrap-break-word">
-            {body}
-          </p>
+          <CommentBody
+            body={body}
+            className="text-sm text-text-primary mt-1 leading-relaxed whitespace-pre-wrap wrap-break-word"
+          />
 
           {/* Actions */}
           <div className="flex items-center gap-1 mt-2">
@@ -215,12 +248,23 @@ export default function CommentItem({
               Reply
             </button>
 
-            <button
-              className="p-1 rounded-md text-text-muted hover:text-text-secondary hover:bg-bg-hover transition-base opacity-0 group-hover:opacity-100"
-              aria-label="More options"
-            >
-              <DotsThreeIcon size={16} weight="bold" />
-            </button>
+            {isAuthor && (
+              <OverflowMenu
+                ariaLabel="Comment options"
+                triggerClassName="p-1 rounded-md text-text-muted hover:text-text-secondary hover:bg-bg-hover transition-base opacity-0 group-hover:opacity-100 focus:opacity-100"
+              >
+                {(close) => (
+                  <button
+                    type="button"
+                    onClick={() => requestDelete(close)}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-vermillion-100 hover:bg-vermillion-700/20 transition-base"
+                  >
+                    <TrashIcon size={14} />
+                    Delete
+                  </button>
+                )}
+              </OverflowMenu>
+            )}
           </div>
 
           {/* Reply form */}
@@ -266,6 +310,7 @@ export default function CommentItem({
                       videoId={videoId}
                       parentId={id}
                       onReplyAdded={handleReplyAdded}
+                      onReplyDeleted={deleteReplyLocal}
                     />
                   )}
                 </>
@@ -274,6 +319,15 @@ export default function CommentItem({
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Delete this comment?"
+        description="This will also remove all replies under it. This can't be undone."
+        confirmLabel="Delete"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setConfirmOpen(false)}
+      />
     </motion.div>
   );
 }
