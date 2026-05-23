@@ -12,6 +12,7 @@ export const listCommentsQuerySchema = z
     parentId: z.string().min(1).optional(),
     cursor: z.string().optional(),
     limit: z.coerce.number().int().min(1).max(50).default(20),
+    sort: z.enum(["newest", "oldest"]).default("newest"),
   })
   .refine((d) => Boolean(d.videoId) !== Boolean(d.parentId), {
     message: "Exactly one of videoId or parentId is required",
