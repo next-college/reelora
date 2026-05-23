@@ -102,10 +102,20 @@ export async function GET(req: NextRequest) {
       ? { videoId: query.videoId, parentId: null }
       : { parentId: query.parentId };
 
-    const items = await prisma.comment.findMany({
-      where: cursor
+    const dir: "asc" | "desc" = query.sort === "oldest" ? "asc" : "desc";
+
+    const cursorWhere = cursor
+      ? query.sort === "oldest"
         ? {
-            ...where,
+            OR: [
+              { createdAt: { gt: new Date(cursor.createdAt) } },
+              {
+                createdAt: new Date(cursor.createdAt),
+                id: { gt: cursor.id },
+              },
+            ],
+          }
+        : {
             OR: [
               { createdAt: { lt: new Date(cursor.createdAt) } },
               {
@@ -114,8 +124,11 @@ export async function GET(req: NextRequest) {
               },
             ],
           }
-        : where,
-      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      : {};
+
+    const items = await prisma.comment.findMany({
+      where: { ...where, ...cursorWhere },
+      orderBy: [{ createdAt: dir }, { id: dir }],
       take: query.limit + 1,
       select: COMMENT_SELECT,
     });

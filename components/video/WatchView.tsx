@@ -223,24 +223,19 @@ export default function WatchView({ video, related, poster }: WatchViewProps) {
               <button
                 onClick={async () => {
                   const url = `${window.location.origin}/watch/${video.id}`;
-                  const shareData = {
-                    title: video.title,
-                    text: video.description ?? undefined,
-                    url,
-                  };
-                  if (
-                    typeof navigator.share === "function" &&
-                    (typeof navigator.canShare !== "function" || navigator.canShare(shareData))
-                  ) {
-                    try {
-                      await navigator.share(shareData);
-                      return;
-                    } catch (err) {
-                      if ((err as Error).name === "AbortError") return;
-                    }
-                  }
                   try {
-                    await navigator.clipboard.writeText(url);
+                    if (navigator.clipboard?.writeText) {
+                      await navigator.clipboard.writeText(url);
+                    } else {
+                      const ta = document.createElement("textarea");
+                      ta.value = url;
+                      ta.style.position = "fixed";
+                      ta.style.opacity = "0";
+                      document.body.appendChild(ta);
+                      ta.select();
+                      document.execCommand("copy");
+                      document.body.removeChild(ta);
+                    }
                     toast.success("Link copied");
                   } catch {
                     toast.error("Couldn't copy link");

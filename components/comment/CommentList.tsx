@@ -1,7 +1,14 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { ChatCircleIcon, ArrowDownIcon, FunnelSimpleIcon } from "@phosphor-icons/react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import {
+  ChatCircleIcon,
+  ArrowDownIcon,
+  FunnelSimpleIcon,
+  CaretDownIcon,
+  CheckIcon,
+} from "@phosphor-icons/react";
+import { motion, AnimatePresence } from "framer-motion";
 import CommentForm from "./CommentForm";
 import CommentItem from "./CommentItem";
 
@@ -37,16 +44,41 @@ interface CommentListProps {
   videoId: string;
 }
 
-type SortOption = "newest" | "top";
+type SortOption = "newest" | "oldest";
+
+const SORT_LABELS: Record<SortOption, string> = {
+  newest: "Newest first",
+  oldest: "Oldest first",
+};
 
 export default function CommentList({ videoId }: CommentListProps) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [sort, setSort] = useState<SortOption>("newest");
+  const [sortOpen, setSortOpen] = useState(false);
   const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
+  const sortRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!sortOpen) return;
+    function onClickOutside(e: MouseEvent) {
+      if (sortRef.current && !sortRef.current.contains(e.target as Node)) {
+        setSortOpen(false);
+      }
+    }
+    function onEsc(e: KeyboardEvent) {
+      if (e.key === "Escape") setSortOpen(false);
+    }
+    document.addEventListener("mousedown", onClickOutside);
+    document.addEventListener("keydown", onEsc);
+    return () => {
+      document.removeEventListener("mousedown", onClickOutside);
+      document.removeEventListener("keydown", onEsc);
+    };
+  }, [sortOpen]);
 
   const fetchComments = useCallback(
     async (appendCursor: string | null) => {
@@ -110,16 +142,58 @@ export default function CommentList({ videoId }: CommentListProps) {
           )}
         </div>
 
-        <div className="flex items-center gap-1">
-          <FunnelSimpleIcon size={14} className="text-text-muted" />
-          <select
-            value={sort}
-            onChange={(e) => setSort(e.target.value as SortOption)}
-            className="bg-transparent text-xs font-medium text-text-secondary cursor-pointer focus:outline-none"
+        <div className="relative" ref={sortRef}>
+          <button
+            type="button"
+            onClick={() => setSortOpen((o) => !o)}
+            aria-haspopup="listbox"
+            aria-expanded={sortOpen}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium text-text-secondary hover:text-text-primary hover:bg-bg-hover transition-base"
           >
-            <option value="newest">Newest</option>
-            <option value="top">Top</option>
-          </select>
+            <FunnelSimpleIcon size={14} />
+            <span>{SORT_LABELS[sort]}</span>
+            <CaretDownIcon
+              size={12}
+              className={`transition-transform ${sortOpen ? "rotate-180" : ""}`}
+            />
+          </button>
+
+          <AnimatePresence>
+            {sortOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: -4, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -4, scale: 0.98 }}
+                transition={{ duration: 0.12, ease: [0.16, 1, 0.3, 1] }}
+                role="listbox"
+                className="absolute top-full right-0 mt-1 z-50 min-w-40 origin-top-right bg-bg-surface border border-border-default rounded-lg shadow-xl overflow-hidden"
+              >
+                {(Object.keys(SORT_LABELS) as SortOption[]).map((key) => {
+                  const selected = sort === key;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      role="option"
+                      aria-selected={selected}
+                      onClick={() => {
+                        setSort(key);
+                        setSortOpen(false);
+                      }}
+                      className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-xs font-medium transition-base ${
+                        selected
+                          ? "text-text-primary bg-bg-hover"
+                          : "text-text-secondary hover:text-text-primary hover:bg-bg-hover"
+                      }`}
+                    >
+                      <span>{SORT_LABELS[key]}</span>
+                      {selected && <CheckIcon size={12} weight="bold" />}
+                    </button>
+                  );
+                })}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 
