@@ -62,8 +62,8 @@ export default function Navbar() {
       </div>
 
       {/* Center: Search */}
-      <div className="flex-1 max-w-xl mx-auto">
-        <form onSubmit={handleSearch} className="relative">
+      <div className="flex-1 min-w-0 max-w-xl mx-auto">
+        <form onSubmit={handleSearch} className="relative w-full">
           <div
             className={`flex items-center border rounded-lg overflow-hidden transition-base ${
               searchFocused
@@ -79,7 +79,7 @@ export default function Navbar() {
               onFocus={() => setSearchFocused(true)}
               onBlur={() => setSearchFocused(false)}
               placeholder="Search videos..."
-              className="flex-1 bg-transparent px-4 py-2 text-sm text-text-primary placeholder:text-text-muted outline-none"
+              className="flex-1 min-w-0 bg-transparent px-4 py-2 text-sm text-text-primary placeholder:text-text-muted outline-none"
             />
             {searchQuery && (
               <button
@@ -87,6 +87,9 @@ export default function Navbar() {
                 onClick={() => {
                   setSearchQuery("");
                   searchInputRef.current?.focus();
+                  if (pathname === "/search") {
+                    router.push("/");
+                  }
                 }}
                 className="p-1.5 mr-1 rounded hover:bg-bg-hover transition-base"
               >
