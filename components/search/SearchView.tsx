@@ -34,8 +34,8 @@ interface SearchViewProps {
   date?: string;
 }
 
-type SortOption = "relevance" | "date" | "views";
-type DateFilter = "any" | "today" | "week" | "month" | "year";
+type SortOption = "relevance" | "new" | "views";
+type DateFilter = "all" | "today" | "week" | "month" | "year";
 
 function formatViews(views: number): string {
   if (views >= 1_000_000) return `${(views / 1_000_000).toFixed(1)}M views`;
@@ -65,12 +65,15 @@ export default function SearchView({ query, sort: initialSort, date: initialDate
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState<SortOption>((initialSort as SortOption) || "relevance");
-  const [dateFilter, setDateFilter] = useState<DateFilter>((initialDate as DateFilter) || "any");
+  const [dateFilter, setDateFilter] = useState<DateFilter>((initialDate as DateFilter) || "all");
   const [showFilters, setShowFilters] = useState(false);
-  const [totalResults, setTotalResults] = useState(0);
 
   const fetchResults = useCallback(async () => {
-    if (!query) return;
+    if (!query) {
+      setResults([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const params = new URLSearchParams({
@@ -81,8 +84,9 @@ export default function SearchView({ query, sort: initialSort, date: initialDate
       const res = await fetch(`/api/search?${params}`);
       if (res.ok) {
         const data = await res.json();
-        setResults(data.results || []);
-        setTotalResults(data.total || 0);
+        setResults(data.items || []);
+      } else {
+        setResults([]);
       }
     } finally {
       setLoading(false);
@@ -99,7 +103,7 @@ export default function SearchView({ query, sort: initialSort, date: initialDate
       <div className="flex items-center justify-between mb-6">
         <div>
           <p className="text-xs text-text-muted">
-            {loading ? "Searching..." : `${totalResults} results for`}
+            {loading ? "Searching..." : `${results.length} results for`}
           </p>
           <h1 className="text-lg font-semibold text-text-primary tracking-tight mt-0.5">
             &ldquo;{query}&rdquo;
@@ -137,7 +141,7 @@ export default function SearchView({ query, sort: initialSort, date: initialDate
               <div className="flex flex-wrap gap-2">
                 {([
                   { key: "relevance", label: "Relevance" },
-                  { key: "date", label: "Upload date" },
+                  { key: "new", label: "Upload date" },
                   { key: "views", label: "View count" },
                 ] as { key: SortOption; label: string }[]).map(({ key, label }) => (
                   <button
@@ -163,7 +167,7 @@ export default function SearchView({ query, sort: initialSort, date: initialDate
               </label>
               <div className="flex flex-wrap gap-2">
                 {([
-                  { key: "any", label: "Any time" },
+                  { key: "all", label: "Any time" },
                   { key: "today", label: "Today" },
                   { key: "week", label: "This week" },
                   { key: "month", label: "This month" },
@@ -225,15 +229,15 @@ export default function SearchView({ query, sort: initialSort, date: initialDate
                 ease: [0.16, 1, 0.3, 1],
               }}
             >
-              <Link href={`/watch/${result.id}`} className="flex gap-4 group">
+              <Link href={`/watch/${result.id}`} className="flex flex-col sm:flex-row gap-3 sm:gap-4 group">
                 {/* Thumbnail */}
-                <div className="relative w-64 shrink-0 aspect-video rounded-lg overflow-hidden bg-bg-hover">
+                <div className="relative w-full sm:w-64 sm:shrink-0 aspect-video rounded-lg overflow-hidden bg-bg-hover">
                   {result.thumbnail ? (
                     <Image
                       src={toCloudinaryThumbnail(result.thumbnail)!}
                       alt={result.title}
                       fill
-                      sizes="256px"
+                      sizes="(max-width: 640px) 100vw, 256px"
                       className="object-cover group-hover:scale-[1.03] transition-transform duration-300"
                     />
                   ) : (
